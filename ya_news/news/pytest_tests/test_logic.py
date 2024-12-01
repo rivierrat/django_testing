@@ -64,8 +64,7 @@ def test_author_can_edit_comment(author_client, news, comment, comment_text):
     assert comment.text == NEW_TEXT
 
 
-def test_user_cannot_edit_comment(
-     not_author_client, comment, comment_text):
+def test_user_cannot_edit_comment(not_author_client, comment, comment_text):
     """Пользователь не может изменить чужой комментарий."""
     not_author_client.post(reverse('news:edit', args=(comment.id,)),
                            data={'text': NEW_TEXT, })

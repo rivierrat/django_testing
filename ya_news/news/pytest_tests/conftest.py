@@ -50,9 +50,9 @@ def news_bulk():
     """Создаёт массив новостей с разными датами публикации и содержимим."""
     now = timezone.now()
     News.objects.bulk_create(
-            News(title=f'Новость {index}', text=f'Текст новости {index}',
-                 date=now - timedelta(hours=index))
-            for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
+        News(title=f'Новость {index}', text=f'Текст новости {index}',
+             date=now - timedelta(hours=index))
+        for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
     )
 
 
@@ -62,8 +62,8 @@ def comments_bulk(news, author):
     now = timezone.now()
     for index in range(10):
         comment = Comment.objects.create(
-                news=news, author=author, text=f'Tекст комментария {index}',
-            )
+            news=news, author=author, text=f'Tекст комментария {index}',
+        )
         comment.created = now - timedelta(hours=index)
         comment.save()
 

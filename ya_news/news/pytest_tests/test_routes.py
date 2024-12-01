@@ -21,23 +21,23 @@ def test_detail_availability_for_anon(news, client):
     """Страница новости доступна анониму."""
     assert client.get(
         reverse('news:detail', args=(news.id,))
-        ).status_code == HTTPStatus.OK
+    ).status_code == HTTPStatus.OK
 
 
 @pytest.mark.parametrize(
     'name',
     ('news:edit', 'news:delete')
 )
-def test_edit_delete_pages_availability_for_author(
-    comment, name, author_client, not_author_client
-      ):
+def test_edit_delete_pages_availability_for_author(comment, name,
+                                                   author_client,
+                                                   not_author_client):
     """Страницы удаления, редактирования комментария доступны только автору."""
     assert author_client.get(
         reverse(name, args=(comment.id,))
-        ).status_code == HTTPStatus.OK
+    ).status_code == HTTPStatus.OK
     assert not_author_client.get(
         reverse(name, args=(comment.id,))
-        ).status_code == HTTPStatus.NOT_FOUND
+    ).status_code == HTTPStatus.NOT_FOUND
 
 
 @pytest.mark.parametrize(

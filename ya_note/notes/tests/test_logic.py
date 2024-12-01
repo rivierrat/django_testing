@@ -42,7 +42,7 @@ class TestNoteCreation(TestCase):
         self.assertEqual(
             slugify(self.form_data['title']),
             Note.objects.get().slug
-            )
+        )
 
 
 class TestEditionDeletionNotes(TestCase):

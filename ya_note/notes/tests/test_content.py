@@ -25,7 +25,7 @@ class TestNotes(TestCase):
         self.client.force_login(self.alice)
         self.assertIn(self.note, self.client.get(
             reverse('notes:list')
-            ).context['object_list'])
+        ).context['object_list'])
 
     def test_forms_is_on_create_and_edit_pages(self):
         """Передача форм на страницы создания и редактирования заметки."""
@@ -34,7 +34,8 @@ class TestNotes(TestCase):
         self.assertIn('form',
                       self.client.get(
                           reverse('notes:edit', args=(self.note.slug,))
-                          ).context)
+                      ).context)
+
 
 class TestAlienNotes(TestCase):
     @classmethod

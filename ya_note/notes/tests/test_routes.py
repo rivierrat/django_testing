@@ -26,7 +26,7 @@ class TestRoutes(TestCase):
             with self.subTest(name=name):
                 self.assertEqual(self.client.get(
                     reverse(name, args=None)
-                    ).status_code, HTTPStatus.OK)
+                ).status_code, HTTPStatus.OK)
 
     def test_pages_availability_for_user(self):
         """Список заметок и страницы добавления доступны пользователю."""
@@ -49,7 +49,7 @@ class TestRoutes(TestCase):
                 with self.subTest(user=user, name=name):
                     self.assertEqual(self.client.get(
                         reverse(name, args=(self.note.slug,))
-                        ).status_code, status)
+                    ).status_code, status)
 
     def test_redirect_for_anon(self):
         login_url = reverse('users:login')
@@ -65,4 +65,4 @@ class TestRoutes(TestCase):
                 url = reverse(name, args=args)
                 self.assertRedirects(
                     self.client.get(url), f'{login_url}?next={url}'
-                    )
+                )
