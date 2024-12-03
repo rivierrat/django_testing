@@ -1,7 +1,5 @@
 import pytest
-
 from pytest_django.asserts import assertFormError
-from django.urls import reverse
 
 from news.forms import BAD_WORDS, WARNING
 from news.models import Comment
@@ -9,64 +7,82 @@ from news.models import Comment
 
 pytestmark = pytest.mark.django_db
 
-NEW_TEXT = 'Это какой-то новый текст'
+COMMENT = {'text': 'Текст комментария', }
+MODIFIED_COMMENT = {'text': 'Новый текст', }
 
 
-def test_anon_cant_make_comment(client, news, comment_text):
+def test_anon_cannot_make_comment(client, detail_url):
     """Аноним не может оставить комментарий."""
-    comments_count = Comment.objects.count()
-    client.post(reverse('news:detail', args=(news.id,)), data=comment_text)
-    assert Comment.objects.count() == comments_count
+    comments = set(Comment.objects.all())
+    client.post(detail_url, data=COMMENT)
+    assert set(Comment.objects.all()) == comments
 
 
-def test_user_can_make_comment(author_client, news, comment_text):
+def test_user_can_make_comment(author_client, detail_url, news, author):
     """Авторизованный пользователь может оставить комментарий."""
-    comments_count = Comment.objects.count()
-    author_client.post(reverse('news:detail', args=(news.id,)),
-                       data=comment_text)
-    assert Comment.objects.count() == comments_count + 1
+    comments = set(Comment.objects.all())
+    author_client.post(detail_url, data=COMMENT)
+    # Проверяем, что создан *один* комментарий:
+    assert len(set(Comment.objects.all()) - comments) == 1
+    # Проверяем, что комментарий создан с ожидаемым содержимым
+    comment = Comment.objects.first()
+    assert comment.news == news
+    assert comment.author == author
+    assert comment.text == COMMENT['text']
 
 
-def test_form_refuses_bad_words(author_client, news, comment_text):
+@pytest.mark.parametrize(
+    'word',
+    [word for word in BAD_WORDS]
+)
+def test_form_refuses_bad_words(author_client, detail_url, word):
     """Форма не принимает комментарий с запрещёнными словами.
 
     Проверяем, что комментарий не создаётся, а форма возвращает ошибку.
     """
-    comments_count = Comment.objects.count()
-    comment_text['text'] = f'Это какой-то {BAD_WORDS[0]} текст'
+    comments = set(Comment.objects.all())
     assertFormError(
-        author_client.post(reverse('news:detail', args=(news.id,)),
-                           data=comment_text),
+        author_client.post(detail_url,
+                           data={'text': f'Это {word} текст'}),
         'form', 'text', errors=(WARNING))
-    assert Comment.objects.count() == comments_count
+    # Проверяем, что после процедуры в таблице остались *те же* комменты:
+    assert len(set(Comment.objects.all()) - comments) == 0
 
 
-def test_author_can_delete_comment(author_client, comment):
+def test_author_can_delete_comment(author_client, comment, comment_delete_url):
     """Пользователь может удалить свой комментарий."""
-    comments_count = Comment.objects.count()
-    author_client.delete(reverse('news:delete', args=(comment.id,)))
-    assert Comment.objects.count() == comments_count - 1
+    comments = set(Comment.objects.all())
+    author_client.delete(comment_delete_url)
+    # Проверяем, что содержимое таблицы до/после отличается на один коммент:
+    assert len(comments - set(Comment.objects.all())) == 1
+    # Проверяем, что не осталось коммента с данным id:
+    assert Comment.objects.filter(id=comment.id).first() is None
 
 
-def test_user_cannot_delete_comment(not_author_client, comment):
+def test_user_cannot_delete_comment(not_author_client, comment_delete_url):
     """Пользователь не может удалить чужой комментарий."""
-    comments_count = Comment.objects.count()
-    not_author_client.delete(reverse('news:delete', args=(comment.id,)))
-    assert Comment.objects.count() == comments_count
+    comments = set(Comment.objects.all())
+    not_author_client.delete(comment_delete_url)
+    # Проверяем, что после процедуры в таблице остались те же комменты:
+    assert len(set(Comment.objects.all()) - comments) == 0
 
 
-def test_author_can_edit_comment(author_client, news, comment, comment_text):
+def test_author_can_edit_comment(
+        author_client, comment, comment_edit_url, news, author
+):
     """Пользователь может изменить свой комментарий."""
-    comment_text['text'] = NEW_TEXT
-    author_client.post(reverse('news:edit', args=(comment.id,)),
-                       data=comment_text)
-    comment.refresh_from_db()
-    assert comment.text == NEW_TEXT
+    author_client.post(comment_edit_url, data=MODIFIED_COMMENT)
+    comment = Comment.objects.first()
+    assert comment.news == news
+    assert comment.author == author
+    assert comment.text == MODIFIED_COMMENT['text']
 
 
-def test_user_cannot_edit_comment(not_author_client, comment, comment_text):
+def test_user_cannot_edit_comment(not_author_client, comment,
+                                  comment_edit_url, news, author):
     """Пользователь не может изменить чужой комментарий."""
-    not_author_client.post(reverse('news:edit', args=(comment.id,)),
-                           data={'text': NEW_TEXT, })
-    comment.refresh_from_db()
-    assert comment.text == comment_text['text']
+    not_author_client.post(comment_edit_url, data=MODIFIED_COMMENT)
+    comment = Comment.objects.first()
+    assert comment.news == news
+    assert comment.author == author
+    assert comment.text == COMMENT['text']

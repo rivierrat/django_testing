@@ -1,44 +1,39 @@
+from django.conf import settings
 import pytest
 
-from django.conf import settings
-from django.urls import reverse
+from news.forms import CommentForm
 
 
 pytestmark = pytest.mark.django_db
 
 
-def test_comment_form_availability_for_anon(news, client):
+def test_comment_form_availability_for_anon(client, detail_url):
     """Форма отправки комментария недоступна анониму."""
-    assert 'form' not in client.get(
-        reverse('news:detail', args=(news.id,))
-    ).context
+    assert 'form' not in client.get(detail_url).context
 
 
-def test_comment_form_availability_for_user(news, author_client):
+def test_comment_form_availability_for_user(author_client, detail_url):
     """Форма отправки комментария доступна пользователю."""
-    assert 'form' in author_client.get(
-        reverse('news:detail', args=(news.id,))
-    ).context
+    context = author_client.get(detail_url).context
+    assert 'form' in context
+    assert isinstance(context['form'], CommentForm)
 
 
-def test_news_count(client, news_bulk):
+def test_news_count(client, news_bulk, news_home_url):
     """На главную страницу выводится не более 10 новостей."""
-    assert (client.get(
-        reverse('news:home')
-    ).context['object_list'].count() == settings.NEWS_COUNT_ON_HOME_PAGE)
+    assert (client.get(news_home_url).context['object_list'].count()
+            == settings.NEWS_COUNT_ON_HOME_PAGE)
 
 
-def test_news_order(client, news_bulk):
+def test_news_order(client, news_bulk, news_home_url):
     """Новости на главной отсортированы по дате от новых к старым."""
-    all_dates = [news.date for news in
-                 client.get(reverse('news:home')).context['object_list']]
-    assert all_dates == sorted(all_dates, reverse=True)
+    timestamps = [news.date for news in
+                  client.get(news_home_url).context['object_list']]
+    assert timestamps == sorted(timestamps, reverse=True)
 
 
-def test_comments_order(client, news, comments_bulk):
+def test_comments_order(client, comments_bulk, detail_url):
     """Комментарии к новости отсортированы по дате от старых к новым."""
-    all_comments = client.get(
-        reverse('news:detail', args=(news.id,))
-    ).context['news'].comment_set.all()
-    all_timestamps = [comment.created for comment in all_comments]
-    assert all_timestamps == sorted(all_timestamps)
+    timestamps = [comment.created for comment in
+                  client.get(detail_url).context['news'].comment_set.all()]
+    assert timestamps == sorted(timestamps)

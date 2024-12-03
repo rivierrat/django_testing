@@ -1,9 +1,12 @@
-import pytest
-
 from datetime import timedelta
+
 from django.conf import settings
 from django.test.client import Client
+from django.urls import reverse
 from django.utils import timezone
+
+import pytest
+
 
 from news.models import Comment, News
 
@@ -69,5 +72,40 @@ def comments_bulk(news, author):
 
 
 @pytest.fixture
-def comment_text():
-    return {'text': 'Текст комментария', }
+def detail_url(news):
+    return reverse('news:detail', args=(news.id,))
+
+
+@pytest.fixture
+def news_home_url():
+    return reverse('news:home')
+
+
+@pytest.fixture
+def comment_delete_url(comment):
+    return reverse('news:delete', args=(comment.id,))
+
+
+@pytest.fixture
+def comment_edit_url(comment):
+    return reverse('news:edit', args=(comment.id,))
+
+
+@pytest.fixture
+def login_url():
+    return reverse('users:login')
+
+
+@pytest.fixture
+def logout_url():
+    return reverse('users:logout')
+
+
+@pytest.fixture
+def signup_url():
+    return reverse('users:signup')
+
+
+# @pytest.fixture
+# def news_id(news):
+#     return news.id,
