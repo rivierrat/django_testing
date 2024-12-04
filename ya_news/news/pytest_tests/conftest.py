@@ -105,12 +105,10 @@ def signup_url():
 
 
 @pytest.fixture
-def edit_redirect_url(comment):
-    return (f'{reverse("users:login")}?'
-            f'next={reverse("news:edit", args=(comment.id,))}')
+def edit_redirect_url(login_url, comment_edit_url):
+    return (f'{login_url}?next={comment_edit_url}')
 
 
 @pytest.fixture
-def delete_redirect_url(comment):
-    return (f'{reverse("users:login")}?'
-            f'next={reverse("news:delete", args=(comment.id,))}')
+def delete_redirect_url(login_url, comment_delete_url):
+    return (f'{login_url}?next={comment_delete_url}')

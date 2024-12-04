@@ -41,8 +41,6 @@ class BaseTest(TestCase):
         cls.readers_note = Note.objects.create(title='Заметка Читателя',
                                                text='Текст',
                                                author=cls.reader_user)
-        cls.form_data = {'title': 'Заголовок',
-                         'text': 'Текст', }
 
         cls.new_data = {'title': 'Новый заг',
                         'text': 'Новый текст',

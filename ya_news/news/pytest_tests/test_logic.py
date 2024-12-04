@@ -18,18 +18,16 @@ def test_anon_cannot_make_comment(client, detail_url):
     assert set(Comment.objects.all()) == comments
 
 
-def test_user_can_make_comment(author_client, detail_url,
-                               news, author, comment):
+def test_user_can_make_comment(author_client, detail_url, news, author):
     """Авторизованный пользователь может оставить комментарий."""
     comments = set(Comment.objects.all())
     author_client.post(detail_url, data=COMMENT)
-    # Проверяем, что создан один комментарий:
-    assert len(set(Comment.objects.all()) - comments) == 1
-    # Проверяем, что комментарий создан с ожидаемым содержимым
-    comment = Comment.objects.get(id=comment.id)
-    assert comment.news == news
-    assert comment.author == author
-    assert comment.text == COMMENT['text']
+    new_comments = set(Comment.objects.all()) - comments
+    assert len(new_comments) == 1
+    new_comment = new_comments.pop()
+    assert new_comment.news == news
+    assert new_comment.author == author
+    assert new_comment.text == COMMENT['text']
 
 
 @pytest.mark.parametrize(
@@ -59,18 +57,23 @@ def test_author_can_delete_comment(author_client, comment, comment_delete_url):
     assert not Comment.objects.filter(id=comment.id).exists()
 
 
-def test_user_cannot_delete_comment(not_author_client, comment_delete_url):
+def test_user_cannot_delete_comment(not_author_client, comment_delete_url,
+                                    comment):
     """Пользователь не может удалить чужой комментарий."""
     comments = set(Comment.objects.all())
     not_author_client.delete(comment_delete_url)
     # Проверяем, что после процедуры в таблице остались те же комменты:
     assert set(Comment.objects.all()) == comments
+    attempted_comment = Comment.objects.get(id=comment.id)
+    # Сверяем поля:
+    assert attempted_comment.news == comment.news
+    assert attempted_comment.author == comment.author
+    assert attempted_comment.text == comment.text
 
 
 def test_author_can_edit_comment(
         author_client, comment, comment_edit_url):
     """Пользователь может изменить свой комментарий."""
-    comment = Comment.objects.get(id=comment.id)
     author_client.post(comment_edit_url, data=MODIFIED_COMMENT)
     attempt_comment = Comment.objects.get(id=comment.id)
     assert comment.news == attempt_comment.news
@@ -81,7 +84,6 @@ def test_author_can_edit_comment(
 def test_user_cannot_edit_comment(not_author_client, comment,
                                   comment_edit_url):
     """Пользователь не может изменить чужой комментарий."""
-    comment = Comment.objects.get(id=comment.id)
     not_author_client.post(comment_edit_url, data=MODIFIED_COMMENT)
     attempt_comment = Comment.objects.get(id=comment.id)
     assert comment.news == attempt_comment.news
