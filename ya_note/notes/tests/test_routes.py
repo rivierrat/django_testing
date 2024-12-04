@@ -1,9 +1,11 @@
 from http import HTTPStatus
 
-from .constants import (ADD_URL, DELETE_URL, DETAIL_URL, EDIT_URL, HOME_URL,
-                        LIST_URL, LOGIN_URL, LOGOUT_URL, SIGNUP_URL,
-                        SUCCESS_URL)
-from .core import BaseTest
+from .core import (
+    ADD_REDIRECT_URL, ADD_URL, DELETE_REDIRECT_URL, DELETE_URL,
+    DETAIL_REDIRECT_URL, DETAIL_URL, EDIT_URL, EDIT_REDIRECT_URL, HOME_URL,
+    LIST_REDIRECT_URL, LIST_URL, LOGIN_URL, LOGOUT_URL, SIGNUP_URL,
+    SUCCESS_REDIRECT_URL, SUCCESS_URL, BaseTest
+)
 
 
 class TestRoutes(BaseTest):
@@ -28,6 +30,19 @@ class TestRoutes(BaseTest):
             [EDIT_URL, self.client_author, HTTPStatus.OK],
             [DELETE_URL, self.client_reader, HTTPStatus.NOT_FOUND],
             [EDIT_URL, self.client_reader, HTTPStatus.NOT_FOUND],
+            [EDIT_URL, self.client, HTTPStatus.FOUND],
+            [EDIT_REDIRECT_URL, self.client, HTTPStatus.OK],
+            [DELETE_URL, self.client, HTTPStatus.FOUND],
+            [DELETE_REDIRECT_URL, self.client, HTTPStatus.OK],
+            [LIST_URL, self.client, HTTPStatus.FOUND],
+            [LIST_REDIRECT_URL, self.client, HTTPStatus.OK],
+            [ADD_URL, self.client, HTTPStatus.FOUND],
+            [ADD_REDIRECT_URL, self.client, HTTPStatus.OK],
+            [SUCCESS_URL, self.client, HTTPStatus.FOUND],
+            [SUCCESS_REDIRECT_URL, self.client, HTTPStatus.OK],
+            [DETAIL_URL, self.client, HTTPStatus.FOUND],
+            [DETAIL_REDIRECT_URL, self.client, HTTPStatus.OK],
+
         ]
         for url, client, status in routes:
             with self.subTest(url=url, client=client, status=status):
@@ -35,9 +50,14 @@ class TestRoutes(BaseTest):
 
     def test_redirect_for_anon(self):
         """Перенаправления для анонимного пользователя."""
-        for url in (EDIT_URL, DELETE_URL, LIST_URL,
-                    ADD_URL, SUCCESS_URL, DETAIL_URL):
-            with self.subTest(url=url):
-                self.assertRedirects(
-                    self.client.get(url), f'{LOGIN_URL}?next={url}'
-                )
+        routes = [
+            [EDIT_URL, EDIT_REDIRECT_URL],
+            [DELETE_URL, DELETE_REDIRECT_URL],
+            [LIST_URL, LIST_REDIRECT_URL],
+            [ADD_URL, ADD_REDIRECT_URL],
+            [SUCCESS_URL, SUCCESS_REDIRECT_URL],
+            [DETAIL_URL, DETAIL_REDIRECT_URL],
+        ]
+        for url, redir_url in routes:
+            with self.subTest(url=url, redir_url=redir_url):
+                self.assertRedirects(self.client.get(url), redir_url)

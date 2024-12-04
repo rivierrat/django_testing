@@ -1,12 +1,10 @@
 from datetime import timedelta
 
+import pytest
 from django.conf import settings
 from django.test.client import Client
 from django.urls import reverse
 from django.utils import timezone
-
-import pytest
-
 
 from news.models import Comment, News
 
@@ -106,6 +104,13 @@ def signup_url():
     return reverse('users:signup')
 
 
-# @pytest.fixture
-# def news_id(news):
-#     return news.id,
+@pytest.fixture
+def edit_redirect_url(comment):
+    return (f'{reverse("users:login")}?'
+            f'next={reverse("news:edit", args=(comment.id,))}')
+
+
+@pytest.fixture
+def delete_redirect_url(comment):
+    return (f'{reverse("users:login")}?'
+            f'next={reverse("news:delete", args=(comment.id,))}')
