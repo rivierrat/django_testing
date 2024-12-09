@@ -38,10 +38,6 @@ class BaseTest(TestCase):
         cls.reader_user = User.objects.create(username='Читатель')
         cls.client_reader = Client()
         cls.client_reader.force_login(cls.reader_user)
-        cls.readers_note = Note.objects.create(title='Заметка Читателя',
-                                               text='Текст',
-                                               author=cls.reader_user)
-
         cls.new_data = {'title': 'Новый заг',
                         'text': 'Новый текст',
                         'slug': 'new_slug', }
